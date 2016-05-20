@@ -22,10 +22,10 @@ var showQuestion = function(question) {
 	// set some properties related to asker
 	var asker = result.find('.asker');
 	asker.html('<p>Name: <a target="_blank" '+
-		'href=http://stackoverflow.com/users/' + question.owner.user_id + ' >' +
-		question.owner.display_name +
+		'href=http://stackoverflow.com/users/' + question.user.user_id + ' >' +
+		question.user.display_name +
 		'</a></p>' +
-		'<p>Reputation: ' + question.owner.reputation + '</p>'
+		'<p>Reputation: ' + question.user.reputation + '</p>'
 	);
 
 	return result;
@@ -81,6 +81,33 @@ var getUnanswered = function(tags) {
 	});
 };
 
+//for the inspiration getter input
+var inspirationGetter = function(tags) {
+	//parameters
+	var request = {
+		site: 'stackoverflow',
+	};
+
+	$.ajax({
+		url: "http://api.stackexchange.com/2.2/tags/" + tags + "/top-answerers/all_time?",
+		data: request,
+		dataType: "jsonp",
+		type: "GET",
+	})
+	.done(function(result){
+		var inspirationSearchResults = showSearchResults(tags, result.items.length);
+
+		$('.search-results').html(inspirationSearchResults);
+		$.each(result.items, function(i, item) {
+			var inspirationQuestion = showQuestion(item);
+			$('.results').append(inspirationQuestion);
+		});
+	})
+	.fail(function(jqXHR, error) {
+		var inspirationErrorElem = showError(error);
+		$('.search-results').append(inspirationErrorElem);
+	});
+};
 
 $(document).ready( function() {
 	$('.unanswered-getter').submit( function(e){
@@ -90,5 +117,11 @@ $(document).ready( function() {
 		// get the value of the tags the user submitted
 		var tags = $(this).find("input[name='tags']").val();
 		getUnanswered(tags);
+	});
+	$('.inspiration-getter').submit(function(event){
+		event.preventDefault();
+		$('.results').html('');
+		var inspirationTags = $('input[name="answerers"]').val();
+		inspirationGetter(inspirationTags);
 	});
 });
